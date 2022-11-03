@@ -5,9 +5,6 @@ EMACS ?= emacs
 
 SHELL := bash
 
-#Point to path of your local emacs-buttercup install
-BUTTERCUP ?= ../emacs-buttercup/
-
 # The order is important for compilation.
 for_compile := straight.el bootstrap.el install.el straight-x.el	\
 	benchmark/straight-bench.el
@@ -18,7 +15,7 @@ for_checkindent := $(wildcard *.el benchmark/*.el)
 
 # excludes benchmarking, smoke and unit tests
 .PHONY: all
-all: clean lint
+all: clean compile test lint
 
 .PHONY: help
 help: ## Show this message
@@ -30,7 +27,7 @@ help: ## Show this message
 		column -t -s'|' >&2
 
 .PHONY: lint
-lint: compile checkdoc longlines checkindent toc ## Run all the linters
+lint: compile checkdoc longlines toc ## Run all the linters
 
 .PHONY: compile
 compile: ## Byte-compile
@@ -104,5 +101,7 @@ docker: ## Start a Docker shell; e.g. make docker VERSION=25.3
 
 .PHONY: test
 test: straight.elc
-	$(EMACS) -Q --batch -L . -L $(BUTTERCUP) \
-		-l buttercup -f buttercup-run-discover
+	$(EMACS) -Q --batch -L . -l ert -l ./tests/straight-test.el \
+--eval "(let ((ert-quiet t)) \
+          (require 'straight-ert-print-hack) \
+          (ert-run-tests-batch-and-exit))"
